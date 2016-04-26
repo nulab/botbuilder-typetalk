@@ -3,18 +3,16 @@
 const botframework       = require('botbuilder')
 const EventEmitter       = require('events')
 const fetch              = require('node-fetch')
-const Package            = require('package')
 const Promise            = require('bluebird')
 const WebSocket          = require('ws')
+const Package            = require('./package')
+const FormData           = require('form-data')
 
 class TypetalkBot extends botframework.DialogCollection {
 
-	constructor () {
-		this.options = {
-			clientId: process.env.HUBOT_TYPETALK_CLIENT_ID,
-			clientSecret: process.env.HUBOT_TYPETALK_CLIENT_SECRET,
-			rooms: process.env.HUBOT_TYPETALK_ROOMS
-		}
+	constructor (options) {
+		super()
+		this.options = options
 		this.defaultDialogId = '/'
 		this.sessionStore = options.sessionStore || new botframework.MemoryStorage()
 		this.userStore = options.userStore || new botframework.MemoryStorage()
@@ -22,10 +20,18 @@ class TypetalkBot extends botframework.DialogCollection {
 	}
 
 	listen () {
-		const stream = new TypetalkStreaming(options)
+		const stream = new TypetalkStream(this.options)
 
-		stream.on('message', (roomId, topicId, account, message) => {
-			if (account.id === this.profile.info.account.id) return
+		stream.on('message', (roomId, postId, account, message) => {
+			if (account.id === this.profile.info.account.id) {
+				this.emit('reply', {
+					roomId: roomId,
+					postId: postId,
+					account: account,
+					text: message
+				})
+				return true
+			}
 
 			const session = new botframework.Session({
 				localizer: this.localizer,
@@ -34,33 +40,13 @@ class TypetalkBot extends botframework.DialogCollection {
 				dialogArgs: {}
 			})
 
-			let getSession = Promise.promisify(this.sessionStore.get.bind(this.sessionStore))
-			let getUser = Promise.promisify(this.userStore.get.bind(this.userStore))
-			Promise.join(
-				getSession(account.id),
-				getUser(account.id)
-			).then((arg) => {
-				let sessionData = arg[0]
-				let userData = arg[1]
-				session.userData = userData || {}
-				session.userData.identity = account
-				session.dispatch(sessionData, {
-					roomId: roomId,
-					topicId: topicId,
-					account: account,
-					message: message
-				})
-			})
-
 			session.on('send', (msg) => {
 				if (!msg) return
-				let setSession = Promise.promisify(this.sessionStore.save.bind(this.sessionStore))
-				let setUser = Promise.promisify(this.userStore.save.bind(this.userStore))
 				Promise.join(
-					setSession(account.id, session.sessionState),
-					setUser(account.id, session.userData)
+					this.setSessionData(account.id, session.sessionState),
+					this.setUserData(account.id, session.userData)
 				).then(() => {
-					stream.postMessage(msg)
+					stream.postMessage(roomId, msg.text)
 					this.emit('send', msg)
 				})
 			})
@@ -68,18 +54,34 @@ class TypetalkBot extends botframework.DialogCollection {
 			session.on('error', (error) => {
 				this.emit('error', error, {
 					roomId: roomId,
-					topicId: topicId,
+					postId: postId,
 					account: account,
-					message: message
+					text: message
 				})
 			})
 
 			session.on('quit', () => {
 				this.emit('quit', {
 					roomId: roomId,
-					topicId: topicId,
+					postId: postId,
 					account: account,
-					message: message
+					text: message
+				})
+			})
+
+			Promise.join(
+				this.getSessionData(account.id),
+				this.getUserData(account.id)
+			).then((arg) => {
+				let sessionData = arg[0]
+				let userData = arg[1]
+				session.userData = userData || {}
+				session.userData.identity = account
+				session.dispatch(sessionData, {
+					roomId: roomId,
+					postId: postId,
+					account: account,
+					text: message
 				})
 			})
 
@@ -87,12 +89,34 @@ class TypetalkBot extends botframework.DialogCollection {
 
 		stream.getMyProfile()
 			.then((data) => {
-				this.profile.info = data
-				this.profile.name = data.account.name
+				this.profile['info'] = data
+				this.profile['name'] = data.account.name
 				stream.listen()
+			})
+			.catch((error) => {
+				console.error(error)
 			})
 	}
 
+  getUserData (accountId) {
+    return Promise.promisify(this.userStore.get.bind(this.userStore))(accountId)
+      .then((userdata) => userdata || {})
+  }
+
+  setUserData (accountId, data) {
+    return Promise.promisify(this.userStore.save.bind(this.userStore))(accountId, data)
+      .then(() => data)
+  }
+
+  getSessionData (accountId) {
+    return Promise.promisify(this.sessionStore.get.bind(this.sessionStore))(accountId)
+      .then((userdata) => userdata)
+  }
+
+  setSessionData (accountId, data) {
+    return Promise.promisify(this.sessionStore.save.bind(this.sessionStore))(accountId, data)
+      .then(() => data)
+  }
 }
 
 module.exports = TypetalkBot
@@ -101,24 +125,24 @@ class TypetalkStream extends EventEmitter {
 
 	constructor (options) {
 		super()
-
 		if (!options.clientId || !options.clientSecret || !options.rooms) {
 			console.error(
 				'Not enough parameters provided. Please set client id, client secret and rooms')
-			process.exit 1
+			process.exit(1)
 		}
-
-		options.rooms.forEach((roomId) => {
-			if (!(roomId.length > 0 && parseInt(roomId) > 0)) {
-				console.error('Room id must be greater than 0')
-				process.exit 1
-			}
-		})
 
 		this.options = options
 		this.clientId = options.clientId
 		this.clientSecret = options.clientSecret
-		this.rooms = options.rooms.split ','
+		this.rooms = options.rooms.split(',')
+
+		this.rooms.forEach((roomId) => {
+			if (!(roomId.length > 0 && parseInt(roomId) > 0)) {
+				console.error('Room id must be greater than 0')
+				process.exit(1)
+			}
+		})
+
 		this.host = 'typetalk.in'
 		this.accessToken = ''
 		this.refreshToken = ''
@@ -139,16 +163,16 @@ class TypetalkStream extends EventEmitter {
 			this.connected = true
 			console.error('Typetalk WebSocket connected')
 			// start up a keepalive
-			setInterval(() => ws.ping 'ping', 1000 * 60 * 10)
+			// setInterval(() => ws.ping('ping', 1000 * 60 * 10))
 		})
 
 		ws.on('message', (data, flags) => {
-			const event = try { JSON.parse(data) } catch (e) { then data or {} }
+			const event = JSON.parse(data)
 			if (event.type === 'postMessage') {
 				const topic = event.data.topic
 				const post = event.data.post
 				// TODO update to es6 sintax
-				if (indexOf.call(this.rooms, topic.id+"") >= 0) {
+				if (this.rooms.indexOf(topic.id+"") >= 0) {
 					this.emit('message',
 						topic.id,
 						post.id,
@@ -157,7 +181,7 @@ class TypetalkStream extends EventEmitter {
 					)
 				}
 			}
-		}
+		})
 
 		ws.on('error', (event) => {
 			console.error(`Typetalk WebSocket error: ${event}`)
@@ -177,16 +201,21 @@ class TypetalkStream extends EventEmitter {
 
 	}
 
-	postMessage (message) {
-		return this.requestWithToken('GET', '/profile', {}, { message: message })
+	postMessage (topicId, message) {
+		const form = new FormData()
+		form.append('message', message)
+		return this.requestWithToken('POST', `/api/v1/topics/${topicId}`, {}, {}, form)
+		.catch((error) => {
+			console.error(error)
+		})
 	}
 
 	getMyProfile () {
-		return this.requestWithToken('GET', '/profile')
+		return this.requestWithToken('GET', '/api/v1/profile', {})
 	}
 
 	updatetAccessToken() {
-		return getAccessToken()
+		return this.getAccessToken()
 			.then((data) => {
 				this.accessToken = data.access_token
 				this.refreshToken = data.refresh_token
@@ -195,11 +224,11 @@ class TypetalkStream extends EventEmitter {
 
 	getAccessToken() {
 		const form = new FormData()
-		form.put('client_id', this.clientId)
-		form.put('client_secret', this.clientSecret)
-		form.put('grant_type', 'client_credentials')
-		form.put('scope', 'my,topic.read,topic.post')
-		return this.request('GET', '/oauth2/access_token', {}, form)
+		form.append('client_id', this.clientId)
+		form.append('client_secret', this.clientSecret)
+		form.append('grant_type', 'client_credentials')
+		form.append('scope', 'my,topic.read,topic.post')
+		return this.request('POST', '/oauth2/access_token', {}, {}, form)
 	}
 
 	requestWithToken(method, path, headers, query, body) {
@@ -210,7 +239,6 @@ class TypetalkStream extends EventEmitter {
 				.catch((error) => {
 					if (error.response.status === 401) {
 						return this.updatetAccessToken()
-							.then(this.getMyProfile)
 					} else {
 						throw error
 					}
@@ -248,7 +276,7 @@ class TypetalkStream extends EventEmitter {
 		if (method != 'GET') {
 			options['body'] = body
 		}
-		const url = `https://${this.host}/${path}${this.toQueryString(query)}`
+		const url = `https://${this.host}${path}${this.toQueryString(query)}`
 		return fetch(url, options)
 	}
 
@@ -256,7 +284,7 @@ class TypetalkStream extends EventEmitter {
 		const queryString = []
 		for(const prop in obj) {
 			if (obj.hasOwnProperty(prop)) {
-				queryString.push(`${prop}=${obj[prop]})
+				queryString.push(`${prop}=${obj[prop]}`)
 			}
 		}
 		return queryString.length > 0 ? `?${queryString.join('&')}` : ''
