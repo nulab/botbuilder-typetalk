@@ -163,7 +163,8 @@ class TypetalkStream extends EventEmitter {
 			this.connected = true
 			console.error('Typetalk WebSocket connected')
 			// start up a keepalive
-			// setInterval(() => ws.ping('ping', 1000 * 60 * 10))
+			setInterval(() => ws.ping('ping'),
+			1000 * 60 * 10)
 		})
 
 		ws.on('message', (data, flags) => {
