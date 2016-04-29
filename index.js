@@ -25,10 +25,10 @@ class TypetalkBot extends botframework.DialogCollection {
     stream.on('message', (roomId, postId, account, message) => {
       if (account.id === this.profile.info.account.id) {
         this.emit('reply', {
-            roomId: roomId,
-            postId: postId,
-            account: account,
-            text: message
+          roomId: roomId,
+          postId: postId,
+          account: account,
+          text: message
         })
         return true
       }
@@ -43,20 +43,20 @@ class TypetalkBot extends botframework.DialogCollection {
       session.on('send', (msg) => {
         if (!msg) return
         Promise.join(
-            this.setSessionData(account.id, session.sessionState),
-            this.setUserData(account.id, session.userData)
+          this.setSessionData(account.id, session.sessionState),
+          this.setUserData(account.id, session.userData)
         ).then(() => {
-            stream.postMessage(roomId, msg.text)
-            this.emit('send', msg)
+          stream.postMessage(roomId, msg.text)
+          this.emit('send', msg)
         })
       })
 
       session.on('error', (error) => {
         this.emit('error', error, {
-            roomId: roomId,
-            postId: postId,
-            account: account,
-            text: message
+          roomId: roomId,
+          postId: postId,
+          account: account,
+          text: message
         })
       })
 
@@ -124,29 +124,29 @@ module.exports = TypetalkBot
 class TypetalkStream extends EventEmitter {
 
   constructor(options) {
-      super()
-      if (!options.clientId || !options.clientSecret || !options.rooms) {
-        console.error(
-            'Not enough parameters provided. Please set client id, client secret and rooms')
+    super()
+    if (!options.clientId || !options.clientSecret || !options.rooms) {
+      console.error(
+        'Not enough parameters provided. Please set client id, client secret and rooms')
+      process.exit(1)
+    }
+
+    this.options = options
+    this.clientId = options.clientId
+    this.clientSecret = options.clientSecret
+    this.rooms = options.rooms.split(',')
+
+    this.rooms.forEach((roomId) => {
+      if (!(roomId.length > 0 && parseInt(roomId) > 0)) {
+        console.error('Room id must be greater than 0')
         process.exit(1)
       }
+    })
 
-      this.options = options
-      this.clientId = options.clientId
-      this.clientSecret = options.clientSecret
-      this.rooms = options.rooms.split(',')
-
-      this.rooms.forEach((roomId) => {
-        if (!(roomId.length > 0 && parseInt(roomId) > 0)) {
-          console.error('Room id must be greater than 0')
-          process.exit(1)
-        }
-      })
-
-      this.host = 'typetalk.in'
-      this.accessToken = ''
-      this.refreshToken = ''
-      this.connected = false
+    this.host = 'typetalk.in'
+    this.accessToken = ''
+    this.refreshToken = ''
+    this.connected = false
   }
 
   listen() {
