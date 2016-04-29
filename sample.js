@@ -13,13 +13,13 @@ const bot = new TypetalkBot({
 
 const dialog = new builder.CommandDialog()
 
-dialog.matches('Nice to meet you', function (session) {
+dialog.matches('Nice to meet you', function(session) {
   if (!session.userData.name) {
     session.send('Nice to meet you too.')
     session.beginDialog('/profile/name')
-  } else if(!session.userData.hobby) {
+  } else if (!session.userData.hobby) {
     session.beginDialog('/profile/hobby')
-  } else if(!session.userData.food) {
+  } else if (!session.userData.food) {
     session.beginDialog('/profile/food')
   } else {
     session.send(`Your name is ${session.userData.name}. Your hobby is ${session.userData.hobby}. Your favorite food is ${session.userData.food}. `)

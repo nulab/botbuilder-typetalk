@@ -170,7 +170,7 @@ class TypetalkStream extends EventEmitter {
       if (event.type === 'postMessage') {
         const topic = event.data.topic
         const post = event.data.post
-        // TODO update to es6 sintax
+          // TODO update to es6 sintax
         if (this.rooms.indexOf(topic.id + "") >= 0) {
           this.emit('message',
             topic.id,
@@ -205,7 +205,7 @@ class TypetalkStream extends EventEmitter {
     form.append('message', message)
     return this.requestWithToken('POST', `/api/v1/topics/${topicId}`, {}, {}, form)
       .catch((error) => {
-          console.error(error)
+        console.error(error)
       })
   }
 
