@@ -1,36 +1,74 @@
 # botbuilder-typetalk
-Typetalk bot connector for Microsoft BotBuilder.
 
-It is scheduled to be npm publish soon !
+[Typetalk](https://www.typetalk.in/) bot connector for Microsoft BotBuilder.
 
-## Let's try!
+## Get started
 
-1 . Get botbuilder-typetalk project.
+※ It is scheduled to be npm publish soon !
 
-``` sh
-git clone git@github.com:vvatanabe/botbuilder-typetalk.git
-cd ./botbuilder-typetalk
-```
+1. Install botbuilder-typetalk
+  ``` sh
+  npm install botbuilder-typetalk --save
+  ```
 
-2 . Create .env file.
+2. Create .env file.  
+  .env:
+  ``` sh
+  HUBOT_TYPETALK_CLIENT_ID='DEADBEEF'     # see http://developer.nulab-inc.com/docs/typetalk/auth#client
+  HUBOT_TYPETALK_CLIENT_SECRET='FACEFEED'
+  HUBOT_TYPETALK_ROOMS='2321,2684'        # comma separated
+  ```
 
-```sh
-HUBOT_TYPETALK_CLIENT_ID='DEADBEEF'     # see http://developer.nulab-inc.com/docs/typetalk/auth#client
-HUBOT_TYPETALK_CLIENT_SECRET='FACEFEED'
-HUBOT_TYPETALK_ROOMS='2321,2684'        # comma separated
-```
+3. Initialize Typetalk Bot.  
+  index.js:
+  ``` javascript
+  'use strict'
+  
+  require('dotenv').config()
+  const TypetalkBot = require('botbuilder-typetalk')
+  
+  const bot = new TypetalkBot({
+    clientId: process.env.HUBOT_TYPETALK_CLIENT_ID,
+    clientSecret: process.env.HUBOT_TYPETALK_CLIENT_SECRET,
+    rooms: process.env.HUBOT_TYPETALK_ROOMS
+  })
+  
+  bot.add('/', (session) => {
+    session.send('Hello!')
+  }
+  
+  bot.listen()
+  ```
 
-3 . Install dependencies.
+4. Run bot with typetalk adapter.
+  ``` sh
+  node index
+  ```
 
-```sh
-npm install
-```
+## Let's try sample!
 
-4 . Run sample bot.
+1. Get botbuilder-typetalk project.
+  ``` sh
+  git clone git@github.com:nulab/botbuilder-typetalk.git
+  cd ./botbuilder-typetalk
+  ```
 
-```sh
-node sample
-```
+2. Create .env file.
+  ```sh
+  HUBOT_TYPETALK_CLIENT_ID='DEADBEEF'     # see http://developer.nulab-inc.com/docs/typetalk/auth#client
+  HUBOT_TYPETALK_CLIENT_SECRET='FACEFEED'
+  HUBOT_TYPETALK_ROOMS='2321,2684'        # comma separated
+  ```
+
+3. Install dependencies.
+  ```sh
+  npm install
+  ```
+
+4. Run sample bot.
+  ```sh
+  node sample
+  ```
 
 ## License
 
