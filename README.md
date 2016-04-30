@@ -4,8 +4,6 @@
 
 ## Get started
 
-※ It is scheduled to be npm publish soon !
-
 1. Install botbuilder-typetalk
   ``` sh
   npm install botbuilder-typetalk --save
