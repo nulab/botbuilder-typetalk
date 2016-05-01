@@ -12,29 +12,29 @@
 2. Create .env file.  
   .env:
   ``` sh
-  HUBOT_TYPETALK_CLIENT_ID='DEADBEEF'     # see http://developer.nulab-inc.com/docs/typetalk/auth#client
-  HUBOT_TYPETALK_CLIENT_SECRET='FACEFEED'
-  HUBOT_TYPETALK_ROOMS='2321,2684'        # comma separated
+  TYPETALK_CLIENT_ID='DEADBEEF'     # see http://developer.nulab-inc.com/docs/typetalk/auth#client
+  TYPETALK_CLIENT_SECRET='FACEFEED'
+  TYPETALK_ROOMS='2321,2684'        # comma separated
   ```
 
 3. Initialize Typetalk Bot.  
   index.js:
   ``` javascript
   'use strict'
-  
+
   require('dotenv').config()
   const TypetalkBot = require('botbuilder-typetalk')
-  
+
   const bot = new TypetalkBot({
     clientId: process.env.HUBOT_TYPETALK_CLIENT_ID,
     clientSecret: process.env.HUBOT_TYPETALK_CLIENT_SECRET,
     rooms: process.env.HUBOT_TYPETALK_ROOMS
   })
-  
+
   bot.add('/', (session) => {
     session.send('Hello!')
   }
-  
+
   bot.listen()
   ```
 
@@ -53,9 +53,9 @@
 
 2. Create .env file.
   ```sh
-  HUBOT_TYPETALK_CLIENT_ID='DEADBEEF'     # see http://developer.nulab-inc.com/docs/typetalk/auth#client
-  HUBOT_TYPETALK_CLIENT_SECRET='FACEFEED'
-  HUBOT_TYPETALK_ROOMS='2321,2684'        # comma separated
+  TYPETALK_CLIENT_ID='DEADBEEF'     # see http://developer.nulab-inc.com/docs/typetalk/auth#client
+  TYPETALK_CLIENT_SECRET='FACEFEED'
+  TYPETALK_ROOMS='2321,2684'        # comma separated
   ```
 
 3. Install dependencies.
