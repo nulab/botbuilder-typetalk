@@ -26,9 +26,9 @@
   const TypetalkBot = require('botbuilder-typetalk')
 
   const bot = new TypetalkBot({
-    clientId: process.env.HUBOT_TYPETALK_CLIENT_ID,
-    clientSecret: process.env.HUBOT_TYPETALK_CLIENT_SECRET,
-    rooms: process.env.HUBOT_TYPETALK_ROOMS
+    clientId: process.env.TYPETALK_CLIENT_ID,
+    clientSecret: process.env.TYPETALK_CLIENT_SECRET,
+    rooms: process.env.TYPETALK_ROOMS
   })
 
   bot.add('/', (session) => {
