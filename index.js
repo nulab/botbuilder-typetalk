@@ -16,13 +16,17 @@ class TypetalkBot extends botframework.DialogCollection {
     this.defaultDialogId = '/'
     this.sessionStore = options.sessionStore || new botframework.MemoryStorage()
     this.userStore = options.userStore || new botframework.MemoryStorage()
+    this.stream = new TypetalkStream(this.options)
     this.profile = {}
   }
 
   listen() {
-    const stream = new TypetalkStream(this.options)
 
-    stream.on('message', (roomId, postId, account, message) => {
+    this.stream.on('connected', () => {
+      this.emit('connected')
+    })
+
+    this.stream.on('message', (roomId, postId, account, message) => {
       if (account.id === this.profile.info.account.id) {
         this.emit('reply', {
           roomId: roomId,
@@ -46,7 +50,7 @@ class TypetalkBot extends botframework.DialogCollection {
           this.setSessionData(account.id, session.sessionState),
           this.setUserData(account.id, session.userData)
         ).then(() => {
-          stream.postMessage(roomId, msg.text)
+          this.stream.postMessage(roomId, msg.text)
           this.emit('send', msg)
         })
       })
@@ -87,11 +91,11 @@ class TypetalkBot extends botframework.DialogCollection {
 
     })
 
-    stream.getMyProfile()
+    this.stream.getMyProfile()
       .then((data) => {
         this.profile['info'] = data
         this.profile['name'] = data.account.name
-        stream.listen()
+        this.stream.listen()
       })
       .catch((error) => {
         console.error(error)
@@ -149,19 +153,23 @@ class TypetalkStream extends EventEmitter {
     this.connected = false
   }
 
-  listen() {
-    console.error('listen start')
-
-    let ws = this.ws = new WebSocket(`https://${this.host}/api/v1/streaming`, {
+  connect() {
+    return new WebSocket(`https://${this.host}/api/v1/streaming`, {
       headers: {
         'Authorization': `Bearer ${this.accessToken}`,
         'User-Agent': `${Package.name} v${Package.version}`
       }
     })
+  }
 
+  listen() {
+    console.error('listen start')
+
+    let ws = this.ws = this.connect()
     ws.on('open', () => {
       this.connected = true
       console.error('Typetalk WebSocket connected')
+      this.emit('connected')
       setInterval(() => ws.ping('ping'), 1000 * 60 * 10)
     })
 
@@ -170,7 +178,7 @@ class TypetalkStream extends EventEmitter {
       if (event.type === 'postMessage') {
         const topic = event.data.topic
         const post = event.data.post
-          // TODO update to es6 sintax
+          // TODO update to es6 syntax
         if (this.rooms.indexOf(topic.id + "") >= 0) {
           this.emit('message',
             topic.id,
