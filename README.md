@@ -1,5 +1,9 @@
 # botbuilder-typetalk
 
+[![Build Status](https://travis-ci.org/nulab/botbuilder-typetalk.svg?branch=master)](https://travis-ci.org/nulab/botbuilder-typetalk)
+[![Coverage Status](https://coveralls.io/repos/github/nulab/botbuilder-typetalk/badge.svg?branch=master)](https://coveralls.io/github/nulab/botbuilder-typetalk?branch=master)
+[![npm version](https://badge.fury.io/js/botbuilder-typetalk.svg)](https://badge.fury.io/js/botbuilder-typetalk)
+
 [Typetalk](https://www.typetalk.in/) bot connector for Microsoft BotBuilder.
 
 ## Get started
