@@ -12,12 +12,12 @@ const Url = require('url')
 const clientId = 'deadbeef'
 const clientSecret = 'deadbeef'
 const topicId = '1'
+const host = 'https://typetalk.in'
 
 process.env.TYPETALK_CLIENT_ID = clientId
 process.env.TYPETALK_CLIENT_SECRET = clientSecret
 process.env.TYPETALK_ROOMS = topicId
 process.env.TYPETALK_API_RATE = 1
-const host = 'https://typetalk.in'
 
 describe("main", () => {
 
@@ -56,6 +56,34 @@ describe("main", () => {
     })
   })
 
+
+  describe('#DataStore', () => {
+
+    beforeEach(() => {
+      global.accountId = 1
+      global.userData = { name: 'john', age: 15, verify: true }
+    })
+
+    it('should set/get user data', (done) => {
+      bot.setUserData(accountId, userData).then(() => {
+        bot.getUserData(accountId).then((data) => {
+          assert.deepEqual(userData, data)
+          done()
+        })
+      })
+    })
+
+    it('should set/get session data', (done) => {
+      bot.setSessionData(accountId, userData).then(() => {
+        bot.getSessionData(accountId).then((data) => {
+          assert.deepEqual(userData, data)
+          done()
+        })
+      })
+    })
+
+  })
+
 })
 
 describe('TypetalkStream', () => {
@@ -84,7 +112,7 @@ describe('TypetalkStream', () => {
     done()
   })
 
-  describe('#Profile', () => {
+  describe('#getMyProfile', () => {
     it('should get profile', (done) => {
       nock(host)
         .get('/api/v1/profile')
@@ -97,6 +125,37 @@ describe('TypetalkStream', () => {
         .catch((error) => {
           console.error(error)
         })
+    })
+  })
+
+  describe('#getAccessToken', () => {
+    it('should get access token', (done) => {
+      bot.stream
+        .getAccessToken()
+        .then((data) => {
+          assert.deepEqual(data, Fixture.oauth2.access_token)
+          done()
+        })
+    })
+  })
+
+  describe('#updatetAccessToken', () => {
+    it('should update access token', (done) => {
+      bot.stream
+        .updatetAccessToken()
+        .then(() => {
+          assert(bot.stream.accessToken === Fixture.oauth2.access_token.access_token)
+          assert(bot.stream.refreshToken === Fixture.oauth2.access_token.refresh_token)
+          done()
+        })
+    })
+  })
+
+  describe('#toQueryString', () => {
+    it('should to query string', (done) => {
+      const queryString = bot.stream.toQueryString({ id: 1, name: 'john', age: 15})
+      assert('?id=1&name=john&age=15' === queryString)
+      done()
     })
   })
 
