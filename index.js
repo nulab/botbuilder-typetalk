@@ -27,14 +27,9 @@ class TypetalkBot extends botframework.DialogCollection {
     })
 
     this.stream.on('message', (roomId, postId, account, message) => {
+
       if (account.id === this.profile.info.account.id) {
-        this.emit('reply', {
-          roomId: roomId,
-          postId: postId,
-          account: account,
-          text: message
-        })
-        return true
+        return
       }
 
       const session = new botframework.Session({
@@ -222,11 +217,14 @@ class TypetalkStream extends EventEmitter {
   }
 
   updatetAccessToken() {
-    return this.getAccessToken()
-      .then((data) => {
-        this.accessToken = data.access_token
-        this.refreshToken = data.refresh_token
-      })
+    return new Promise((resolve, reject) => {
+      this.getAccessToken()
+        .then((data) => {
+          this.accessToken = data.access_token
+          this.refreshToken = data.refresh_token
+          resolve()
+        })
+    })
   }
 
   getAccessToken() {
