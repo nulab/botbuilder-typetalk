@@ -80,7 +80,8 @@ class TypetalkBot extends botframework.DialogCollection {
           roomId: roomId,
           postId: postId,
           account: account,
-          text: message
+          text: message,
+          from: { channelId: 'typetalk' }
         })
       })
 
@@ -188,7 +189,7 @@ class TypetalkStream extends EventEmitter {
     ws.on('error', (event) => {
       console.error(`Typetalk WebSocket error: ${event}`)
       if (!this.connected) {
-        setTimeout(() => listen(), 30000)
+        setTimeout(() => this.listen(), 30000)
       }
     })
 
@@ -198,7 +199,7 @@ class TypetalkStream extends EventEmitter {
       this.connected = false
       console.error(`Typetalk WebSocket disconnected: code=${code}, message=${message}`)
       console.error('Typetalk WebSocket try to reconnect')
-      setTimeout(() => listen(), 30000)
+      setTimeout(() => this.listen(), 30000)
     })
 
   }
