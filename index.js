@@ -32,6 +32,8 @@ class TypetalkBot extends botframework.DialogCollection {
         return
       }
 
+      const storeId = `${roomId}:${account.id}`
+
       const session = new botframework.Session({
         localizer: this.localizer,
         dialogs: this,
@@ -42,10 +44,10 @@ class TypetalkBot extends botframework.DialogCollection {
       session.on('send', (msg) => {
         if (!msg) return
         Promise.join(
-          this.setSessionData(account.id, session.sessionState),
-          this.setUserData(account.id, session.userData)
+          this.setSessionData(storeId, session.sessionState),
+          this.setUserData(storeId, session.userData)
         ).then(() => {
-          this.stream.postMessage(roomId, msg.text)
+          this.stream.postMessage(roomId, msg.text, postId)
           this.emit('send', msg)
         })
       })
@@ -69,8 +71,8 @@ class TypetalkBot extends botframework.DialogCollection {
       })
 
       Promise.join(
-        this.getSessionData(account.id),
-        this.getUserData(account.id)
+        this.getSessionData(storeId),
+        this.getUserData(storeId)
       ).then((arg) => {
         let sessionData = arg[0]
         let userData = arg[1]
@@ -174,7 +176,6 @@ class TypetalkStream extends EventEmitter {
       if (event.type === 'postMessage') {
         const topic = event.data.topic
         const post = event.data.post
-          // TODO update to es6 syntax
         if (this.rooms.indexOf(topic.id + "") >= 0) {
           this.emit('message',
             topic.id,
@@ -204,9 +205,10 @@ class TypetalkStream extends EventEmitter {
 
   }
 
-  postMessage(topicId, message) {
+  postMessage(topicId, message, replyTo) {
     const form = new FormData()
     form.append('message', message)
+    if (replyTo) form.append('replyTo', replyTo)
     return this.requestWithToken('POST', `/api/v1/topics/${topicId}`, {}, {}, form)
       .catch((error) => {
         console.error(error)
