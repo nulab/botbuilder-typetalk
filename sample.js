@@ -11,51 +11,74 @@ const bot = new TypetalkBot({
   rooms: process.env.TYPETALK_ROOMS
 })
 
-const dialog = new builder.CommandDialog()
-
-dialog.matches('Nice to meet you', function(session) {
-  if (!session.userData.name) {
-    session.send('Nice to meet you too.')
-    session.beginDialog('/profile/name')
-  } else if (!session.userData.hobby) {
-    session.beginDialog('/profile/hobby')
-  } else if (!session.userData.food) {
-    session.beginDialog('/profile/food')
-  } else {
-    session.send(`Your name is ${session.userData.name}. Your hobby is ${session.userData.hobby}. Your favorite food is ${session.userData.food}. `)
-    session.send('I remembered!')
-  }
+bot.use((session, next) => {
+  // middleware logic
+  next();
 })
+bot.use((session, next) => {
+  // middleware logic
+  next();
+})
+
+const dialog = new builder.CommandDialog();
+
+dialog.onDefault(() => {
+  // dafault
+})
+
+dialog.matches('register profile', [
+  (session) => {
+    session.beginDialog('/profile/name');
+  },
+  (session) => {
+    session.beginDialog('/profile/age');
+  },
+  (session) => {
+    session.beginDialog('/profile/confirm');
+  },
+  (session) => {
+    session.reset('/')
+  }
+])
 
 bot.add('/profile/name', [
   (session) => {
-    builder.Prompts.text(session, 'What is your name?')
+    builder.Prompts.text(session, 'What\'s your name ?');
   },
   (session, results) => {
-    session.userData.name = results.response
-    session.endDialog()
+    session.userData.name = results.response;
+    session.endDialog();
   }
-])
+]);
 
-bot.add('/profile/hobby', [
+bot.add('/profile/age', [
   (session) => {
-    builder.Prompts.text(session, 'What is your hobby?')
+    builder.Prompts.number(session, 'How old are you ?');
   },
   (session, results) => {
-    session.userData.hobby = results.response
-    session.endDialog()
+    session.userData.age = results.response;
+    session.endDialog();
   }
 ])
 
-bot.add('/profile/food', [
+bot.add('/profile/confirm', [
   (session) => {
-    builder.Prompts.text(session, 'What is your favorite food?')
+    const message = `
+      Your name: ${session.userData.name}
+      Your age: ${session.userData.age}
+      Are you sure ?
+    `;
+    builder.Prompts.confirm(session, message);
   },
   (session, results) => {
-    session.userData.food = results.response
-    session.endDialog()
+    if (results.response) {
+      session.send('Completed the profile registration.');
+    } else {
+      session.send('Canceled profile registration.');
+    }
+    session.endDialog();
   }
 ])
 
-bot.add('/', dialog)
+bot.add('/', dialog);
 bot.listen()

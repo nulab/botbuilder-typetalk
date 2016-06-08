@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "bluebird": "^3.3.5",
-    "botbuilder": "^1.0.0",
+    "botbuilder": "^1.0.1",
     "node-fetch": "^1.5.1",
     "ws": "^1.0.1"
   },
