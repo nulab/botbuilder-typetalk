@@ -1,5 +1,14 @@
 .git
-.gitignore
-.env
-.travis.yml
 coverage
+demo
+npm-debug.log
+test/**/*.ts
+typings
+typings-local
+.DS_Store
+.env
+.gitignore
+.travis.yml
+*.js.map
+index.ts
+index.js
