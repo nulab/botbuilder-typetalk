@@ -29,6 +29,7 @@ class TypetalkBot extends botbuilder.DialogCollection {
                 return;
             }
             const storeId = `${roomId}:${account.id}`;
+            const userId = `${account.id}`;
             const sessionOptions = {
                 dialogs: this,
                 dialogId: this.defaultDialogId,
@@ -39,7 +40,7 @@ class TypetalkBot extends botbuilder.DialogCollection {
             session.on('send', (msg) => {
                 if (!msg)
                     return;
-                Bluebird.join(this.setSessionData(storeId, session.sessionState), this.setUserData(storeId, session.userData)).then(() => {
+                Bluebird.join(this.setSessionData(storeId, session.sessionState), this.setUserData(userId, session.userData)).then(() => {
                     this.stream.postMessage(roomId, msg.text, postId);
                     this.emit('send', msg);
                 });
@@ -60,7 +61,7 @@ class TypetalkBot extends botbuilder.DialogCollection {
                     text: message
                 });
             });
-            Bluebird.join(this.getSessionData(storeId), this.getUserData(storeId)).then((arg) => {
+            Bluebird.join(this.getSessionData(storeId), this.getUserData(userId)).then((arg) => {
                 const sessionData = arg[0];
                 const userData = arg[1];
                 session.userData = userData || {};
@@ -85,24 +86,24 @@ class TypetalkBot extends botbuilder.DialogCollection {
             console.error(error);
         });
     }
-    getUserData(accountId) {
+    getUserData(userId) {
         const options = { context: this.userStore };
-        return Bluebird.promisify(this.userStore.get, options)(accountId)
+        return Bluebird.promisify(this.userStore.get, options)(userId)
             .then((userdata) => userdata || {});
     }
-    setUserData(accountId, data) {
+    setUserData(userId, data) {
         const options = { context: this.userStore };
-        return Bluebird.promisify(this.userStore.save, options)(accountId, data)
+        return Bluebird.promisify(this.userStore.save, options)(userId, data)
             .then(() => data);
     }
-    getSessionData(accountId) {
+    getSessionData(storeId) {
         const options = { context: this.sessionStore };
-        return Bluebird.promisify(this.sessionStore.get, options)(accountId)
+        return Bluebird.promisify(this.sessionStore.get, options)(storeId)
             .then((userdata) => userdata);
     }
-    setSessionData(accountId, data) {
+    setSessionData(storeId, data) {
         const options = { context: this.sessionStore };
-        return Bluebird.promisify(this.sessionStore.save, options)(accountId, data)
+        return Bluebird.promisify(this.sessionStore.save, options)(storeId, data)
             .then(() => data);
     }
 }
