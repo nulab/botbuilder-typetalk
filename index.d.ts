@@ -4,7 +4,7 @@ export interface ITypetalkBotOptions {
     clientId: string;
     clientSecret: string;
     rooms: string;
-    defaultDialogId: string;
+    defaultDialogId?: string;
     localizer?: botbuilder.ILocalizer;
     sessionStore?: botbuilder.IStorage;
     userStore?: botbuilder.IStorage;

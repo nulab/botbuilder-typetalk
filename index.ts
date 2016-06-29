@@ -14,7 +14,7 @@ export interface ITypetalkBotOptions {
   clientId: string;
   clientSecret: string;
   rooms: string;
-  defaultDialogId: string;
+  defaultDialogId?: string;
   localizer?: botbuilder.ILocalizer;
   sessionStore?: botbuilder.IStorage;
   userStore?:  botbuilder.IStorage;
@@ -34,7 +34,7 @@ export class TypetalkBot extends botbuilder.DialogCollection {
     super();
     this.options = options;
     this.localizer = options.localizer;
-    this.defaultDialogId = '/';
+    this.defaultDialogId = options.defaultDialogId || '/';
     this.sessionStore = options.sessionStore || new botbuilder.MemoryStorage();
     this.userStore = options.userStore || new botbuilder.MemoryStorage();
     this.stream = new TypetalkStream(this.options);

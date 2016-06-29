@@ -8,6 +8,7 @@
         "removeComments": false
     },
     "files": [
+        "./demo/sample.ts",
         "./typings/index.d.ts",
         "./index.d.ts",
         "./index.ts",

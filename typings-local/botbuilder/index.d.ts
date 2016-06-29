@@ -978,7 +978,7 @@ export class Session {
      * reason of [completed](http://docs.botframework.com/sdkreference/nodejs/enums/_botbuilder_d_.resumereason.html#completed).
      * @param args Optional arguments used to format the final output text when __result__ is a _{string}_.
      */
-    endDialog(result: string|IMessage|IDialogResult<any>, ...args: any[]): Session;
+    endDialog(result?: string|IMessage|IDialogResult<any>, ...args: any[]): Session;
 
     /**
      * Lets a dialog compare its confidence that it understood an utterance with it's parent. The
