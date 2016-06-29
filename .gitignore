@@ -11,3 +11,4 @@ typings
 demo/**/*.js
 test/**/*.js
 *.js.map
+index.js
