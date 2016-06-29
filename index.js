@@ -1,23 +1,24 @@
-/// <reference path="./typings/index.d.ts" />
 "use strict";
-const botframework = require('botbuilder');
-const EventEmitter = require('events');
+const botbuilder = require('botbuilder');
 const fetch = require('node-fetch');
+const Bluebird = require('bluebird');
 const WebSocket = require('ws');
+const events = require('events');
 const FormData = require('form-data');
 const Package = {
     "name": "botbuilder-typetalk",
     "version": "0.3.0",
 };
-class TypetalkBot extends botframework.DialogCollection {
+class TypetalkBot extends botbuilder.DialogCollection {
     constructor(options) {
         super();
         this.options = options;
+        this.localizer = options.localizer;
         this.defaultDialogId = '/';
-        this.sessionStore = options.sessionStore || new botframework.MemoryStorage();
-        this.userStore = options.userStore || new botframework.MemoryStorage();
+        this.sessionStore = options.sessionStore || new botbuilder.MemoryStorage();
+        this.userStore = options.userStore || new botbuilder.MemoryStorage();
         this.stream = new TypetalkStream(this.options);
-        this.profile = {};
+        this.profile = { name: null, info: null };
     }
     listen() {
         this.stream.on('connected', () => {
@@ -28,16 +29,17 @@ class TypetalkBot extends botframework.DialogCollection {
                 return;
             }
             const storeId = `${roomId}:${account.id}`;
-            const session = new botframework.Session({
-                localizer: this.localizer,
+            const sessionOptions = {
                 dialogs: this,
                 dialogId: this.defaultDialogId,
+                localizer: this.localizer,
                 dialogArgs: {}
-            });
+            };
+            const session = new botbuilder.Session(sessionOptions);
             session.on('send', (msg) => {
                 if (!msg)
                     return;
-                Promise.join(this.setSessionData(storeId, session.sessionState), this.setUserData(storeId, session.userData)).then(() => {
+                Bluebird.join(this.setSessionData(storeId, session.sessionState), this.setUserData(storeId, session.userData)).then(() => {
                     this.stream.postMessage(roomId, msg.text, postId);
                     this.emit('send', msg);
                 });
@@ -58,18 +60,19 @@ class TypetalkBot extends botframework.DialogCollection {
                     text: message
                 });
             });
-            Promise.join(this.getSessionData(storeId), this.getUserData(storeId)).then((arg) => {
-                let sessionData = arg[0];
-                let userData = arg[1];
+            Bluebird.join(this.getSessionData(storeId), this.getUserData(storeId)).then((arg) => {
+                const sessionData = arg[0];
+                const userData = arg[1];
                 session.userData = userData || {};
                 session.userData.identity = account;
-                session.dispatch(sessionData, {
+                const typetalkMessage = {
                     roomId: roomId,
                     postId: postId,
                     account: account,
                     text: message,
                     from: { channelId: 'typetalk' }
-                });
+                };
+                session.dispatch(sessionData, typetalkMessage);
             });
         });
         this.stream.getMyProfile()
@@ -83,25 +86,28 @@ class TypetalkBot extends botframework.DialogCollection {
         });
     }
     getUserData(accountId) {
-        return Promise.promisify(this.userStore.get.bind(this.userStore))(accountId)
+        const options = { context: this.userStore };
+        return Bluebird.promisify(this.userStore.get, options)(accountId)
             .then((userdata) => userdata || {});
     }
     setUserData(accountId, data) {
-        return Promise.promisify(this.userStore.save.bind(this.userStore))(accountId, data)
+        const options = { context: this.userStore };
+        return Bluebird.promisify(this.userStore.save, options)(accountId, data)
             .then(() => data);
     }
     getSessionData(accountId) {
-        return Promise.promisify(this.sessionStore.get.bind(this.sessionStore))(accountId)
+        const options = { context: this.sessionStore };
+        return Bluebird.promisify(this.sessionStore.get, options)(accountId)
             .then((userdata) => userdata);
     }
     setSessionData(accountId, data) {
-        return Promise.promisify(this.sessionStore.save.bind(this.sessionStore))(accountId, data)
+        const options = { context: this.sessionStore };
+        return Bluebird.promisify(this.sessionStore.save, options)(accountId, data)
             .then(() => data);
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = TypetalkBot;
-class TypetalkStream extends EventEmitter {
+exports.TypetalkBot = TypetalkBot;
+class TypetalkStream extends events.EventEmitter {
     constructor(options) {
         super();
         this.host = 'typetalk.in';
@@ -133,7 +139,7 @@ class TypetalkStream extends EventEmitter {
         let ws = this.ws = this.connect();
         ws.on('open', () => {
             this.connected = true;
-            console.error('Typetalk WebSocket connected');
+            console.log('Typetalk WebSocket connected');
             this.emit('connected');
             setInterval(() => ws.ping('ping'), 1000 * 60 * 10);
         });
@@ -166,13 +172,13 @@ class TypetalkStream extends EventEmitter {
         form.append('message', message);
         if (replyTo)
             form.append('replyTo', replyTo);
-        return this.requestWithToken('POST', `/api/v1/topics/${topicId}`, {}, {}, form)
+        return this.requestWithToken('POST', `/api/v1/topics/${topicId}`, null, null, form)
             .catch((error) => {
             console.error(error);
         });
     }
     getMyProfile() {
-        return this.requestWithToken('GET', '/api/v1/profile', {});
+        return this.requestWithToken('GET', '/api/v1/profile');
     }
     updatetAccessToken() {
         return new Promise((resolve, reject) => {
@@ -190,11 +196,11 @@ class TypetalkStream extends EventEmitter {
         form.append('client_secret', this.clientSecret);
         form.append('grant_type', 'client_credentials');
         form.append('scope', 'my,topic.read,topic.post');
-        return this.request('POST', '/oauth2/access_token', {}, {}, form);
+        return this.request('POST', '/oauth2/access_token', null, null, form);
     }
     requestWithToken(method, path, headers, query, body) {
+        headers = headers || {};
         const req = () => {
-            headers = !headers ? {} : headers;
             headers['Authorization'] = `Bearer ${this.accessToken}`;
             return this.request(method, path, headers, query, body)
                 .catch((error) => {
@@ -214,6 +220,7 @@ class TypetalkStream extends EventEmitter {
         }
     }
     request(method, path, headers, query, body) {
+        headers = headers || {};
         return this.fetching(method, path, headers, query, body)
             .then((response) => {
             if (response.status >= 200 && response.status < 300) {
@@ -250,6 +257,4 @@ class TypetalkStream extends EventEmitter {
         }
         return queryString.length > 0 ? `?${queryString.join('&')}` : '';
     }
-}
-class TypetalkError extends Error {
 }

@@ -3,15 +3,17 @@
         "target": "es6",
         "module": "commonjs",
         "sourceMap": false,
-        "noImplicitAny": true,
+        "noImplicitAny": false,
         "noEmitOnError": false,
         "removeComments": false
     },
     "files": [
         "./typings/index.d.ts",
+        "./index.d.ts",
         "./index.ts",
-        "./test/test-index.ts",
-        "./package.json",
+        "./test/mock/bot.ts",
+        "./test/fixtures/index.ts",
+        "./test/test-index.ts"
     ],
     "exclude": [
         "./node_modules"

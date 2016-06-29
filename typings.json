@@ -1,16 +1,17 @@
 {
   "globalDependencies": {
     "empower": "registry:dt/empower#0.0.0+20160317120654",
-    "form-data": "registry:dt/form-data#0.0.0+20160316155526",
+    "form-data": "file:typings-local/form-data/index.d.ts",
     "mocha": "registry:dt/mocha#2.2.5+20160317120654",
+    "nock": "registry:dt/nock#0.54.0+20160613160405",
     "node": "registry:dt/node#6.0.0+20160613154055",
     "node-fetch": "registry:dt/node-fetch#0.0.0+20160607205125",
     "power-assert": "registry:dt/power-assert#0.0.0+20160316155526",
     "power-assert-formatter": "registry:dt/power-assert-formatter#0.0.0+20160317120654",
-    "ws": "registry:dt/ws#0.0.0+20160405094435"
+    "ws": "registry:dt/ws#0.0.0+20160405094435",
+    "botbuilder": "file:typings-local/botbuilder/index.d.ts"
   },
   "dependencies": {
-    "bluebird": "registry:npm/bluebird#3.3.4+20160531224558",
-    "botbuilder": "npm:botbuilder/lib/botbuilder.d.ts"
+    "bluebird": "registry:npm/bluebird#3.3.4+20160531224558"
   }
 }

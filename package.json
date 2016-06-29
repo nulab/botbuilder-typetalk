@@ -10,10 +10,11 @@
     "url": "git://github.com/nulab/botbuilder-typetalk.git"
   },
   "scripts": {
-    "test": "mocha --compilers ts:espower-typescript/guess test/**/*.ts",
+    "test": "mocha --compilers ts:espower-typescript/guess test/test*.ts",
     "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/**/test*.js",
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
-    "build": "tsc"
+    "build": "tsc",
+    "build-tsd": "tsc -d"
   },
   "dependencies": {
     "bluebird": "^3.3.5",

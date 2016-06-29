@@ -2,14 +2,14 @@
 
 require('dotenv').config()
 
-const TypetalkBot = require('./index')
+const TypetalkBot = require('./index').TypetalkBot;
 const builder = require('botbuilder')
 
 const bot = new TypetalkBot({
   clientId: process.env.TYPETALK_CLIENT_ID,
   clientSecret: process.env.TYPETALK_CLIENT_SECRET,
   rooms: process.env.TYPETALK_ROOMS
-})
+});
 
 bot.use((session, next) => {
   // middleware logic
@@ -21,10 +21,6 @@ bot.use((session, next) => {
 })
 
 const dialog = new builder.CommandDialog();
-
-dialog.onDefault(() => {
-  // dafault
-})
 
 dialog.matches('register profile', [
   (session) => {
@@ -40,6 +36,8 @@ dialog.matches('register profile', [
     session.reset('/')
   }
 ])
+
+dialog.onDefault(() => {})
 
 bot.add('/profile/name', [
   (session) => {

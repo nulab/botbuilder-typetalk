@@ -1,10 +1,8 @@
-/// <reference path="./typings/index.d.ts" />
-
-import botframework = require('botbuilder');
-import EventEmitter = require('events');
+import botbuilder = require('botbuilder');
 import fetch = require('node-fetch');
 import Bluebird = require('bluebird');
 import WebSocket = require('ws');
+import events = require('events');
 import FormData = require('form-data');
 
 const Package = {
@@ -17,53 +15,58 @@ export interface ITypetalkBotOptions {
   clientSecret: string;
   rooms: string;
   defaultDialogId: string;
-  sessionStore: botframework.IStorage;
-  userStore:  botframework.IStorage;
+  localizer?: botbuilder.ILocalizer;
+  sessionStore?: botbuilder.IStorage;
+  userStore?:  botbuilder.IStorage;
 }
 
-export default class TypetalkBot extends botframework.DialogCollection {
+export class TypetalkBot extends botbuilder.DialogCollection {
 
   private options: ITypetalkBotOptions;
   private defaultDialogId: string;
-  private sessionStore: botframework.IStorage;
-  private userStore:  botframework.IStorage;
-  private stream: {};
-  private profile: {};
+  private localizer: botbuilder.ILocalizer;
+  private sessionStore: botbuilder.IStorage;
+  private userStore:  botbuilder.IStorage;
+  private profile: { name: string; info: Profile; };
+  private stream: TypetalkStream;
 
   constructor(options: ITypetalkBotOptions) {
-    super()
-    this.options = options
-    this.defaultDialogId = '/'
-    this.sessionStore = options.sessionStore || new botframework.MemoryStorage()
-    this.userStore = options.userStore || new botframework.MemoryStorage()
-    this.stream = new TypetalkStream(this.options)
-    this.profile = {}
+    super();
+    this.options = options;
+    this.localizer = options.localizer;
+    this.defaultDialogId = '/';
+    this.sessionStore = options.sessionStore || new botbuilder.MemoryStorage();
+    this.userStore = options.userStore || new botbuilder.MemoryStorage();
+    this.stream = new TypetalkStream(this.options);
+    this.profile = { name: null, info: null };
   }
 
-  public listen (): void {
+  listen (): void {
 
     this.stream.on('connected', () => {
       this.emit('connected')
     })
 
-    this.stream.on('message', (roomId, postId, account, message) => {
+    this.stream.on('message', (roomId: number, postId: number, account: Account, message: string): void => {
 
       if (account.id === this.profile.info.account.id) {
-        return
+        return;
       }
 
-      const storeId = `${roomId}:${account.id}`
+      const storeId = `${roomId}:${account.id}`;
 
-      const session = new botframework.Session({
-        localizer: this.localizer,
-        dialogs: this,
+      const sessionOptions = <botbuilder.ISessionOptions> {
+        dialogs: <botbuilder.DialogCollection> this,
         dialogId: this.defaultDialogId,
-        dialogArgs: {}
-      })
+        localizer: this.localizer,
+        dialogArgs: <any>{}
+      };
 
-      session.on('send', (msg) => {
+      const session = new botbuilder.Session(sessionOptions);
+
+      session.on('send', (msg: any) => {
         if (!msg) return
-        Promise.join(
+        Bluebird.join(
           this.setSessionData(storeId, session.sessionState),
           this.setUserData(storeId, session.userData)
         ).then(() => {
@@ -72,14 +75,14 @@ export default class TypetalkBot extends botframework.DialogCollection {
         })
       })
 
-      session.on('error', (error) => {
+      session.on('error', (error: Error) => {
         this.emit('error', error, {
           roomId: roomId,
           postId: postId,
           account: account,
           text: message
-        })
-      })
+        });
+      });
 
       session.on('quit', () => {
         this.emit('quit', {
@@ -90,64 +93,70 @@ export default class TypetalkBot extends botframework.DialogCollection {
         })
       })
 
-      Promise.join(
+      Bluebird.join(
         this.getSessionData(storeId),
         this.getUserData(storeId)
       ).then((arg) => {
-        let sessionData = arg[0]
-        let userData = arg[1]
-        session.userData = userData || {}
-        session.userData.identity = account
-        session.dispatch(sessionData, {
+        const sessionData = arg[0];
+        const userData = arg[1];
+        session.userData = userData || {};
+        session.userData.identity = account;
+        const typetalkMessage = <TypetalkMessage> {
           roomId: roomId,
           postId: postId,
           account: account,
           text: message,
           from: { channelId: 'typetalk' }
-        })
-      })
+        };
+        session.dispatch(sessionData, typetalkMessage);
+      });
 
-    })
+    });
 
     this.stream.getMyProfile()
       .then((data) => {
         this.profile['info'] = data
         this.profile['name'] = data.account.name
-        this.stream.listen()
+        this.stream.listen();
       })
       .catch((error) => {
-        console.error(error)
-      })
+        console.error(error);
+      });
   }
 
-  getUserData(accountId) {
-    return Promise.promisify(this.userStore.get.bind(this.userStore))(accountId)
-      .then((userdata) => userdata || {})
+  private getUserData(accountId: string): Bluebird<any> {
+    const options: Bluebird.PromisifyOptions = { context: this.userStore };
+    return Bluebird.promisify<any, string>(this.userStore.get, options)(accountId)
+      .then((userdata) => userdata || {});
   }
 
-  setUserData(accountId, data) {
-    return Promise.promisify(this.userStore.save.bind(this.userStore))(accountId, data)
-      .then(() => data)
+  private setUserData(accountId: string, data: any): Bluebird<any> {
+    const options: Bluebird.PromisifyOptions = { context: this.userStore };
+    return Bluebird.promisify<void, string, any>(this.userStore.save, options)(accountId, data)
+      .then(() => data);
   }
 
-  getSessionData(accountId) {
-    return Promise.promisify(this.sessionStore.get.bind(this.sessionStore))(accountId)
-      .then((userdata) => userdata)
+  private getSessionData(accountId: string): Bluebird<any> {
+    const options: Bluebird.PromisifyOptions = { context: this.sessionStore };
+    return Bluebird.promisify<any, string>(this.sessionStore.get, options)(accountId)
+      .then((userdata) => userdata);
   }
 
-  setSessionData(accountId, data) {
-    return Promise.promisify(this.sessionStore.save.bind(this.sessionStore))(accountId, data)
-      .then(() => data)
+  private setSessionData(accountId: string, data: any): Bluebird<any> {
+    const options: Bluebird.PromisifyOptions = { context: this.sessionStore };
+    return Bluebird.promisify<void, string, any>(this.sessionStore.save, options)(accountId, data)
+      .then(() => data);
   }
 }
 
-class TypetalkStream extends EventEmitter {
+class TypetalkStream extends events.EventEmitter {
 
   private host: string = 'typetalk.in';
   private connected: boolean = false;
   private clientId: string;
   private clientSecret: string;
   private rooms: string[];
+  private ws: WebSocket;
   private accessToken: string;
   private refreshToken: string;
 
@@ -178,22 +187,22 @@ class TypetalkStream extends EventEmitter {
     })
   }
 
-  listen() {
-    console.log('listen start')
+  listen(): void {
+    console.log('listen start');
 
-    let ws = this.ws = this.connect()
+    let ws = this.ws = this.connect();
     ws.on('open', () => {
-      this.connected = true
-      console.error('Typetalk WebSocket connected')
-      this.emit('connected')
-      setInterval(() => ws.ping('ping'), 1000 * 60 * 10)
+      this.connected = true;
+      console.log('Typetalk WebSocket connected');
+      this.emit('connected');
+      setInterval(() => ws.ping('ping'), 1000 * 60 * 10);
     })
 
     ws.on('message', (data, flags) => {
-      const event = JSON.parse(data)
+      const event = JSON.parse(data);
       if (event.type === 'postMessage') {
-        const topic = event.data.topic
-        const post = event.data.post
+        const topic = event.data.topic;
+        const post = event.data.post;
         if (this.rooms.indexOf(topic.id + "") >= 0) {
           this.emit('message',
             topic.id,
@@ -203,93 +212,94 @@ class TypetalkStream extends EventEmitter {
           )
         }
       }
-    })
+    });
 
     ws.on('error', (event) => {
-      console.error(`Typetalk WebSocket error: ${event}`)
+      console.error(`Typetalk WebSocket error: ${event}`);
       if (!this.connected) {
-        setTimeout(() => this.listen(), 30000)
+        setTimeout(() => this.listen(), 30000);
       }
-    })
+    });
 
-    ws.on('pong', (data, flags) => console.error('pong'))
+    ws.on('pong', (data, flags) => console.error('pong'));
 
     ws.on('close', (code, message) => {
-      this.connected = false
-      console.error(`Typetalk WebSocket disconnected: code=${code}, message=${message}`)
-      console.error('Typetalk WebSocket try to reconnect')
-      setTimeout(() => this.listen(), 30000)
-    })
+      this.connected = false;
+      console.error(`Typetalk WebSocket disconnected: code=${code}, message=${message}`);
+      console.error('Typetalk WebSocket try to reconnect');
+      setTimeout(() => this.listen(), 30000);
+    });
 
   }
 
-  postMessage(topicId, message, replyTo) {
-    const form = new FormData()
-    form.append('message', message)
-    if (replyTo) form.append('replyTo', replyTo)
-    return this.requestWithToken('POST', `/api/v1/topics/${topicId}`, {}, {}, form)
+  postMessage(topicId: number, message: string, replyTo: number): Promise<_fetch.Response> {
+    const form = new FormData();
+    form.append('message', message);
+    if (replyTo) form.append('replyTo', replyTo);
+    return this.requestWithToken('POST', `/api/v1/topics/${topicId}`, null, null, form)
       .catch((error) => {
-        console.error(error)
-      })
+        console.error(error);
+      });
   }
 
-  getMyProfile() {
-    return this.requestWithToken('GET', '/api/v1/profile', {})
+  getMyProfile(): Promise<Profile>  {
+    return this.requestWithToken('GET', '/api/v1/profile');
   }
 
-  updatetAccessToken() {
+  updatetAccessToken(): Promise<any> {
     return new Promise((resolve, reject) => {
       this.getAccessToken()
         .then((data) => {
-          this.accessToken = data.access_token
-          this.refreshToken = data.refresh_token
-          resolve()
+          this.accessToken = data.access_token;
+          this.refreshToken = data.refresh_token;
+          resolve();
         })
-    })
+    });
   }
 
-  getAccessToken() {
-    const form = new FormData()
+  getAccessToken(): Promise<{ access_token: string, refresh_token: string}> {
+    const form = new FormData();
     form.append('client_id', this.clientId)
     form.append('client_secret', this.clientSecret)
     form.append('grant_type', 'client_credentials')
     form.append('scope', 'my,topic.read,topic.post')
-    return this.request('POST', '/oauth2/access_token', {}, {}, form)
+    return this.request('POST', '/oauth2/access_token', null, null, form)
   }
 
-  requestWithToken(
+  requestWithToken<T>(
     method: string,
     path: string,
-    headers: _fetch.HeaderInit,
-    query: {},
-    body: _fetch.BodyInit
-  ) {
+    headers?: _fetch.HeaderInit,
+    query?: {},
+    body?: _fetch.BodyInit
+  ): Promise<T> {
+    headers = headers || <_fetch.HeaderInit> {};
     const req = () => {
-      headers = !headers ? {} : headers
-      headers['Authorization'] = `Bearer ${this.accessToken}`
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
       return this.request(method, path, headers, query, body)
         .catch((error) => {
           if (error.response.status === 401) {
-            return this.updatetAccessToken()
+            return this.updatetAccessToken();
           } else {
-            throw error
+            throw error;
           }
-        })
+        });
     }
     if (!this.accessToken) {
-      return this.updatetAccessToken().then(req)
+      return this.updatetAccessToken().then(req);
     } else {
-      return req()
+      return req();
     }
   }
 
-  request(
+  request<T>(
     method: string,
     path: string,
-    headers: _fetch.HeaderInit,
-    query: {},
-    body: _fetch.BodyInit
-  ): Promise<_fetch.Response> {
+    headers?: _fetch.HeaderInit,
+    query?: {},
+    body?: _fetch.BodyInit
+  ): Promise<T> {
+    headers = headers || <_fetch.HeaderInit> {};
     return this.fetching(method, path, headers, query, body)
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
@@ -309,8 +319,8 @@ class TypetalkStream extends EventEmitter {
     method: string,
     path: string,
     headers: _fetch.HeaderInit,
-    query: {},
-    body: _fetch.BodyInit
+    query?: {},
+    body?: _fetch.BodyInit
   ): Promise<_fetch.Response> {
     headers['User-Agent'] = `${Package.name} v${Package.version}`
     const options: _fetch.RequestInit = {
@@ -336,6 +346,26 @@ class TypetalkStream extends EventEmitter {
 
 }
 
-class TypetalkError extends Error {
+declare class Profile {
+  account: Account;
+}
+
+declare class Account {
+  id: number;
+  name: string;
+  fullName: string;
+  suggestion: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+declare class TypetalkMessage implements botbuilder.IMessage {
+  roomId: number;
+  postId: number;
+  account: Account;
+}
+
+declare class TypetalkError extends Error {
   response: _fetch.Response;
 }
