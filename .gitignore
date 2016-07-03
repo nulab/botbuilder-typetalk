@@ -13,5 +13,3 @@ demo/**/*.d.ts
 test/**/*.js
 test/**/*.d.ts
 *.js.map
-index.js
-index.d.ts

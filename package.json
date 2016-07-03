@@ -4,7 +4,7 @@
   "description": "Typetalk bot connector for Microsoft BotBuilder.",
   "author": "vvatanabe",
   "license": "MIT",
-  "main": "dist/botbuilder-typetalk.js",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/nulab/botbuilder-typetalk.git"
@@ -13,8 +13,7 @@
     "test": "mocha --compilers ts:espower-typescript/guess test/test*.ts",
     "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/**/test*.js",
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
-    "build": "tsc --removeComments && npm run build-dist",
-    "build-dist": "ncp index.js dist/botbuilder-typetalk.js",
+    "build": "tsc --removeComments",
     "build-tsd": "tsc -d"
   },
   "dependencies": {

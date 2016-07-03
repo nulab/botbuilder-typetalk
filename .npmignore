@@ -11,4 +11,5 @@ typings-local
 .travis.yml
 *.js.map
 index.ts
-index.js
+tsconfig.json
+typings.json

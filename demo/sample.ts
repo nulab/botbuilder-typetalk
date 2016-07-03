@@ -1,4 +1,4 @@
-import { TypetalkBot } from '../dist/botbuilder-typetalk';
+import { TypetalkBot } from '../index';
 import * as builder from 'botbuilder';
 import * as dotenv from 'dotenv';
 dotenv.config();

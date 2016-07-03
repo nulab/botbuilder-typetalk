@@ -10,7 +10,6 @@
     "files": [
         "./demo/sample.ts",
         "./typings/index.d.ts",
-        "./dist/botbuilder-typetalk.d.ts",
         "./index.ts",
         "./test/mock/bot.ts",
         "./test/fixtures/index.ts",
