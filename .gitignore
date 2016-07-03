@@ -7,3 +7,11 @@ coverage
 *.swo
 tmux-*.log
 .env
+typings
+demo/**/*.js
+demo/**/*.d.ts
+test/**/*.js
+test/**/*.d.ts
+*.js.map
+index.js
+index.d.ts

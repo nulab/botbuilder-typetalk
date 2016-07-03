@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "sourceMap": false,
+        "noImplicitAny": false,
+        "noEmitOnError": false,
+        "removeComments": false
+    },
+    "files": [
+        "./demo/sample.ts",
+        "./typings/index.d.ts",
+        "./dist/botbuilder-typetalk.d.ts",
+        "./index.ts",
+        "./test/mock/bot.ts",
+        "./test/fixtures/index.ts",
+        "./test/test-index.ts"
+    ],
+    "exclude": [
+        "./node_modules",
+        "./typings-local"
+    ]
+}

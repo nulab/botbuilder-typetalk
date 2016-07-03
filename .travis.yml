@@ -1,5 +1,11 @@
+sudo: false
 language: node_js
 node_js:
 - node
-script: npm run test-cov
+before_install:
+  - npm install -g typings
+install:
+  - npm install
+  - typings install
+script: npm run build && npm run test-cov
 after_success: 'npm run coveralls'
