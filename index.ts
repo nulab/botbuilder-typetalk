@@ -1,14 +1,11 @@
-import botbuilder = require('botbuilder');
+import * as botbuilder from 'botbuilder';
+import * as Bluebird from 'bluebird';
+import * as WebSocket from 'ws';
+import * as events from 'events';
 import fetch = require('node-fetch');
-import Bluebird = require('bluebird');
-import WebSocket = require('ws');
-import events = require('events');
 import FormData = require('form-data');
 
-const Package = {
-  "name": "botbuilder-typetalk",
-  "version": "0.3.0",
-};
+const Package = require('./package');
 
 export interface ITypetalkBotOptions {
   clientId: string;

@@ -1,14 +1,11 @@
 "use strict";
 const botbuilder = require('botbuilder');
-const fetch = require('node-fetch');
 const Bluebird = require('bluebird');
 const WebSocket = require('ws');
 const events = require('events');
+const fetch = require('node-fetch');
 const FormData = require('form-data');
-const Package = {
-    "name": "botbuilder-typetalk",
-    "version": "0.3.0",
-};
+const Package = require('./package');
 class TypetalkBot extends botbuilder.DialogCollection {
     constructor(options) {
         super();
