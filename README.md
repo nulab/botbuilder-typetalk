@@ -27,7 +27,7 @@
   'use strict'
 
   require('dotenv').config()
-  const TypetalkBot = require('botbuilder-typetalk')
+  const TypetalkBot = require('botbuilder-typetalk').TypetalkBot
 
   const bot = new TypetalkBot({
     clientId: process.env.TYPETALK_CLIENT_ID,
