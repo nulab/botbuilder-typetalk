@@ -14,10 +14,11 @@ export declare class TypetalkBot extends botbuilder.DialogCollection {
     private localizer;
     private sessionStore;
     private userStore;
-    private profile;
     private stream;
+    public profile;
     constructor(options: ITypetalkBotOptions);
-    listen(): void;
+    public listen(): void;
+    getProfile():
     private getUserData(userId);
     private setUserData(userId, data);
     private getSessionData(storeId);

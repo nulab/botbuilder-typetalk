@@ -24,8 +24,8 @@ export class TypetalkBot extends botbuilder.DialogCollection {
   private localizer: botbuilder.ILocalizer;
   private sessionStore: botbuilder.IStorage;
   private userStore:  botbuilder.IStorage;
-  private profile: { name: string; info: Profile; };
   private stream: TypetalkStream;
+  public profile: { name: string; info: Profile; };
 
   constructor(options: ITypetalkBotOptions) {
     super();
@@ -38,7 +38,7 @@ export class TypetalkBot extends botbuilder.DialogCollection {
     this.profile = { name: null, info: null };
   }
 
-  listen (): void {
+  public listen(): void {
 
     this.stream.on('connected', () => {
       this.emit('connected')
