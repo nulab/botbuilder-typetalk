@@ -1,6 +1,6 @@
 {
   "name": "botbuilder-typetalk",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Typetalk bot connector for Microsoft BotBuilder.",
   "author": "vvatanabe",
   "license": "MIT",
