@@ -23,6 +23,7 @@
     "ws": "^1.0.1"
   },
   "devDependencies": {
+    "@types/mocha": "^5.2.7",
     "@types/node": "^12.12.21",
     "coveralls": "^2.11.9",
     "dotenv": "^2.0.0",
