@@ -10,9 +10,9 @@
     "url": "git://github.com/nulab/botbuilder-typetalk.git"
   },
   "scripts": {
-    "test": "mocha --compilers ts:espower-typescript/guess test/test*.ts",
-    "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/**/test*.js",
-    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "test": "tsc && mocha --exit test/test-index.js",
+    "test-cov": "tsc && nyc mocha --exit test/test-index.js",
+    "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "build": "tsc --removeComments",
     "build-tsd": "tsc -d"
   },
@@ -28,10 +28,10 @@
     "coveralls": "^3.0.9",
     "dotenv": "^2.0.0",
     "espower-typescript": "^5.0.1",
-    "istanbul": "^0.4.3",
-    "mocha": "^2.5.3",
+    "mocha": "^6.2.2",
     "ncp": "^2.0.0",
-    "nock": "^8.0.0",
+    "nock": "^11.7.0",
+    "nyc": "^15.0.0",
     "power-assert": "^1.4.1",
     "typescript": "^1.8.10",
     "uglify-js": "^2.6.2"
