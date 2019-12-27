@@ -13,3 +13,4 @@ demo/**/*.d.ts
 test/**/*.js
 test/**/*.d.ts
 *.js.map
+.nyc_output/
