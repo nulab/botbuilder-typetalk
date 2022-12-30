@@ -28,7 +28,7 @@
     "coveralls": "^3.0.9",
     "dotenv": "^2.0.0",
     "espower-typescript": "^5.0.1",
-    "mocha": "^6.2.2",
+    "mocha": "^10.2.0",
     "ncp": "^2.0.0",
     "nock": "^11.7.0",
     "nyc": "^15.0.0",
